@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "PetShop Cashier",
+    "slug": "petshop-cashier",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.petshop.cashier",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to scan product QR/barcodes at the cashier."
+      }
+    },
+    "android": {
+      "package": "com.petshop.cashier",
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow PetShop Cashier to scan product QR/barcodes."
+        }
+      ]
+    ]
+  }
+}
