@@ -89,6 +89,11 @@ const products = [];
 let skipped = 0;
 
 for (const row of rows.slice(1)) {
+  const category = (row[col.category] || '').trim().replace(/\s+/g, ' ');
+  if (category === 'Minuman Dingin') {
+    skipped++;
+    continue;
+  }
   const name = (row[col.name] || '').trim();
   if (!name) {
     skipped++;
@@ -122,7 +127,7 @@ for (const row of rows.slice(1)) {
   products.push({
     sku,
     name,
-    category: (row[col.category] || '').trim().replace(/\s+/g, ' '),
+    category,
     brand: (row[col.brand] || '').trim().replace(/\s+/g, ' ') === 'N/A'
       ? ''
       : (row[col.brand] || '').trim().replace(/\s+/g, ' '),

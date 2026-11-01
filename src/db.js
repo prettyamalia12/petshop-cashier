@@ -107,7 +107,6 @@ export const CATEGORY_CODES = {
   'Obat Kucing': 'O',
   'Grooming Essential': 'G',
   'Pasir Kucing & Litters': 'L',
-  'Minuman Dingin': 'MID',
 };
 
 export const CATEGORIES = Object.keys(CATEGORY_CODES);

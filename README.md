@@ -18,7 +18,7 @@ A WebView only wraps a website — it doesn't add hardware access. Since camera 
 
 ## Features
 
-- **Pre-loaded inventory** — your full CSV inventory (255 products) ships with the app and loads into the on-device database on first launch. Duplicate SKUs in the sheet were made unique by appending the package size (e.g. `LCD001-500G`). To re-import after changing the CSV: `node scripts/build-seed.js`, then reload the app.
+- **Pre-loaded inventory** — your full CSV inventory (227 products) ships with the app and loads into the on-device database on first launch. Duplicate SKUs in the sheet were made unique by appending the package size (e.g. `LCD001-500G`). To re-import after changing the CSV: `node scripts/build-seed.js`, then reload the app.
 - **Auto-generated SKUs** — new products follow the shop's `AABBCC00X` SKU format: **AA** = brand initials (e.g. Life Cat → `LC`), **BB** = product-type code, **CC** = rasa/varian initials (e.g. Adult Tuna → `AT`, optional), **00X** = sequence number. The sequence counts up per brand + product-type group, matching the existing inventory (e.g. `CCDAT001`, `CCDAS002`, `CCDK003`). Leave the SKU field blank when adding a product — a live preview shows the code it will get.
 
   | Category (Jenis Produk) | Code | | Category | Code |
@@ -29,9 +29,8 @@ A WebView only wraps a website — it doesn't add hardware access. Since camera 
   | Snack Kucing Tube | `ST` | | Obat Kucing | `O` |
   | Snack kucing / Snack | `SK` / `S` | | Grooming Essential | `G` |
   | Makanan Ikan | `MI` | | Pasir Kucing & Litters | `L` |
-  | Makanan Kura Kura | `MK` | | Minuman Dingin | `MID` |
-  | Makanan Burung | `MB` | | Makanan Hamster | `MH` |
-  | Aksesoris Hamster | `AH` | | | |
+  | Makanan Kura Kura | `MK` | | Makanan Hamster | `MH` |
+  | Makanan Burung | `MB` | | Aksesoris Hamster | `AH` |
 
   Example: brand `Cat Choize`, category *Dry Food*, rasa *Adult Tuna* → `CCDAT005` (next in the `CCD` group).
 - **Cashier tab** — point the camera at a product QR/barcode; the product is added to the cart with live **income and profit per line**. Choose a payment method — **Cash** (enter amount received, change is calculated), **QRIS**, or **Bank Transfer** — then charge to complete the sale and decrement stock.
