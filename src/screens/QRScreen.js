@@ -43,7 +43,9 @@ export default function QRScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.item} onPress={() => setSelected(item)}>
             <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemMeta}>SKU: {item.sku} · {money(item.price)}</Text>
+            <Text style={styles.itemMeta}>
+              SKU: {item.sku}{item.barcode ? ` · BC: ${item.barcode}` : ''} · {money(item.price)}
+            </Text>
           </TouchableOpacity>
         )}
         ListEmptyComponent={<Text style={styles.empty}>Add products first.</Text>}

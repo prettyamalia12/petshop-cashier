@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { getProductBySku, checkout } from '../db';
+import { getProductByCode, checkout } from '../db';
 
 const money = (n) => `Rp ${n.toLocaleString('id-ID')}`;
 
@@ -27,9 +27,12 @@ export default function SellScreen() {
     if (lastScan.current.code === data && now - lastScan.current.at < 2000) return;
     lastScan.current = { code: data, at: now };
 
-    const product = await getProductBySku(data);
+    const product = await getProductByCode(data);
     if (!product) {
-      Alert.alert('Not found', `No product matches code: ${data}`);
+      Alert.alert(
+        'Not found',
+        `No product matches code: ${data}\n\nAdd it in the Products tab — you can scan this barcode into the Barcode field.`
+      );
       return;
     }
     if (product.stock <= 0) {

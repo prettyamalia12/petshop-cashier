@@ -41,6 +41,7 @@ export async function initDb() {
     `ALTER TABLE sales ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'cash'`,
     `ALTER TABLE products ADD COLUMN category TEXT NOT NULL DEFAULT ''`,
     `ALTER TABLE products ADD COLUMN brand TEXT NOT NULL DEFAULT ''`,
+    `ALTER TABLE products ADD COLUMN barcode TEXT NOT NULL DEFAULT ''`,
   ];
   for (const stmt of migrations) {
     try {
@@ -74,20 +75,31 @@ export async function seedIfEmpty() {
 const all = (sql, params = []) => db.getAllAsync(sql, params);
 
 export const getProducts = () => all('SELECT * FROM products ORDER BY name');
-export const getProductBySku = async (sku) =>
-  (await all('SELECT * FROM products WHERE sku = ? LIMIT 1', [sku]))[0] || null;
 
-export function addProduct({ sku, name, category = '', brand = '', price, cost, stock }) {
+// Cashier lookup: a scanned code may be a packaging barcode or one of our SKUs.
+export const getProductByCode = async (code) =>
+  (await all('SELECT * FROM products WHERE barcode = ? OR sku = ? LIMIT 1', [code, code]))[0] ||
+  null;
+
+export const getProductByBarcode = async (barcode, excludeId) =>
+  (
+    await all('SELECT id, name FROM products WHERE barcode = ? AND id != ? LIMIT 1', [
+      barcode,
+      excludeId || -1,
+    ])
+  )[0] || null;
+
+export function addProduct({ sku, name, category = '', brand = '', barcode = '', price, cost, stock }) {
   return db.runAsync(
-    'INSERT INTO products (sku, name, category, brand, price, cost, stock) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [sku, name, category, brand, price, cost, stock]
+    'INSERT INTO products (sku, name, category, brand, barcode, price, cost, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [sku, name, category, brand, barcode, price, cost, stock]
   );
 }
 
-export function updateProduct(id, { sku, name, category = '', brand = '', price, cost, stock }) {
+export function updateProduct(id, { sku, name, category = '', brand = '', barcode = '', price, cost, stock }) {
   return db.runAsync(
-    'UPDATE products SET sku = ?, name = ?, category = ?, brand = ?, price = ?, cost = ?, stock = ? WHERE id = ?',
-    [sku, name, category, brand, price, cost, stock, id]
+    'UPDATE products SET sku = ?, name = ?, category = ?, brand = ?, barcode = ?, price = ?, cost = ?, stock = ? WHERE id = ?',
+    [sku, name, category, brand, barcode, price, cost, stock, id]
   );
 }
 

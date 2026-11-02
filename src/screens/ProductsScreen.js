@@ -1,12 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, Modal, TextInput, ScrollView,
   StyleSheet, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { getProducts, addProduct, updateProduct, deleteProduct, generateSku, CATEGORIES } from '../db';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { getProducts, addProduct, updateProduct, deleteProduct, generateSku, getProductByBarcode, CATEGORIES } from '../db';
 
-const emptyForm = { sku: '', name: '', category: '', brand: '', variant: '', price: '', cost: '', stock: '' };
+const emptyForm = { sku: '', name: '', category: '', brand: '', variant: '', barcode: '', price: '', cost: '', stock: '' };
 
 export default function ProductsScreen() {
   const [products, setProducts] = useState([]);
@@ -14,6 +15,8 @@ export default function ProductsScreen() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [query, setQuery] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const lastScan = useRef({ code: null, at: 0 });
 
   const load = useCallback(() => {
     getProducts().then(setProducts);
@@ -24,7 +27,8 @@ export default function ProductsScreen() {
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.sku.toLowerCase().includes(query.toLowerCase())
+      p.sku.toLowerCase().includes(query.toLowerCase()) ||
+      (p.barcode || '').includes(query)
   );
 
   const openForm = (product) => {
@@ -37,6 +41,7 @@ export default function ProductsScreen() {
             category: product.category || '',
             brand: product.brand || '',
             variant: '',
+            barcode: product.barcode || '',
             price: String(product.price),
             cost: String(product.cost),
             stock: String(product.stock),
@@ -67,12 +72,23 @@ export default function ProductsScreen() {
     };
   }, [form.brand, form.category, form.variant, form.name, editing, modalVisible]);
 
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+
+  const onBarcodeScanned = ({ data }) => {
+    const now = Date.now();
+    if (lastScan.current.code === data && now - lastScan.current.at < 1500) return;
+    lastScan.current = { code: data, at: now };
+    setForm((prev) => ({ ...prev, barcode: data }));
+    setScanning(false);
+  };
+
   const save = async () => {
     const data = {
       sku: form.sku.trim(),
       name: form.name.trim(),
       category: form.category.trim(),
       brand: form.brand.trim(),
+      barcode: form.barcode.trim(),
       price: parseFloat(form.price) || 0,
       cost: parseFloat(form.cost) || 0,
       stock: parseInt(form.stock) || 0,
@@ -80,6 +96,13 @@ export default function ProductsScreen() {
     if (!data.name) {
       Alert.alert('Missing info', 'Product name is required.');
       return;
+    }
+    if (data.barcode) {
+      const taken = await getProductByBarcode(data.barcode, editing?.id);
+      if (taken) {
+        Alert.alert('Barcode in use', `This barcode is already assigned to "${taken.name}".`);
+        return;
+      }
     }
     // Auto-generate the SKU for new products when left blank.
     if (!editing && !data.sku) {
@@ -129,7 +152,7 @@ export default function ProductsScreen() {
                 <Text style={styles.price}>{money(item.price)}</Text>
               </View>
               <Text style={styles.meta}>
-                {item.brand ? `${item.brand} · ` : ''}{item.category ? `${item.category} · ` : ''}SKU: {item.sku} · Stock: {item.stock} · Cost: {money(item.cost)} · Margin: {money(margin)}
+                {item.brand ? `${item.brand} · ` : ''}{item.category ? `${item.category} · ` : ''}SKU: {item.sku}{item.barcode ? ` · BC: ${item.barcode}` : ''} · Stock: {item.stock} · Cost: {money(item.cost)} · Margin: {money(margin)}
               </Text>
             </TouchableOpacity>
           );
@@ -194,6 +217,21 @@ export default function ProductsScreen() {
                   onChangeText={(v) => setForm({ ...form, variant: v })}
                 />
               )}
+              <View style={styles.barcodeRow}>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                  placeholder="Packaging barcode (optional)"
+                  value={form.barcode}
+                  onChangeText={(v) => setForm({ ...form, barcode: v })}
+                  keyboardType="number-pad"
+                />
+                <TouchableOpacity style={styles.scanButton} onPress={() => setScanning(true)}>
+                  <Text style={styles.scanButtonText}>Scan</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.barcodeHint}>
+                Scan the barcode printed on the product's packaging. At the cashier, the camera accepts both this barcode and the SKU QR.
+              </Text>
               {[
                 ['price', 'Selling price'],
                 ['cost', 'Purchase cost'],
@@ -219,6 +257,27 @@ export default function ProductsScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal visible={scanning} animationType="slide" onRequestClose={() => setScanning(false)}>
+        <View style={styles.scannerContainer}>
+          <Text style={styles.scannerTitle}>Scan the product's packaging barcode</Text>
+          {cameraPermission?.granted ? (
+            <CameraView
+              style={styles.scannerCamera}
+              facing="back"
+              barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'code128', 'upc_a', 'upc_e', 'qr', 'datamatrix'] }}
+              onBarcodeScanned={onBarcodeScanned}
+            />
+          ) : (
+            <TouchableOpacity style={styles.scannerPermission} onPress={requestCameraPermission}>
+              <Text style={styles.scannerPermissionText}>Tap to allow camera access</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.scannerClose} onPress={() => setScanning(false)}>
+            <Text style={styles.scannerCloseText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );
@@ -254,6 +313,23 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 12, color: '#555' },
   chipTextActive: { color: '#fff', fontWeight: '600' },
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, marginBottom: 10 },
+  barcodeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  scanButton: {
+    backgroundColor: '#2e7d32', paddingHorizontal: 14, paddingVertical: 11,
+    borderRadius: 8, marginBottom: 0,
+  },
+  scanButtonText: { color: '#fff', fontWeight: '700' },
+  barcodeHint: { fontSize: 11, color: '#888', marginBottom: 10 },
+  scannerContainer: { flex: 1, backgroundColor: '#000', paddingTop: 60 },
+  scannerTitle: { color: '#fff', textAlign: 'center', fontSize: 16, marginBottom: 16 },
+  scannerCamera: { flex: 1 },
+  scannerPermission: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scannerPermissionText: { color: '#fff', fontSize: 16 },
+  scannerClose: {
+    alignSelf: 'center', marginVertical: 20, backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 28, paddingVertical: 12, borderRadius: 10,
+  },
+  scannerCloseText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   modalButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 4 },
   button: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
   cancel: { backgroundColor: '#eee' },
