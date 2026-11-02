@@ -5,12 +5,19 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useAudioPlayer } from 'expo-audio';
+import { createAudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import { getProducts, addProduct, updateProduct, deleteProduct, generateSku, getProductByBarcode, CATEGORIES } from '../db';
 import ScanOverlay from '../components/ScanOverlay';
 
 const beep = require('../../assets/beep.wav');
+
+const playBeep = () => {
+  const player = createAudioPlayer(beep);
+  player.play();
+  setTimeout(() => player.remove(), 1000);
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+};
 
 const emptyForm = { sku: '', name: '', category: '', brand: '', variant: '', barcode: '', price: '', cost: '', stock: '' };
 
@@ -22,7 +29,6 @@ export default function ProductsScreen() {
   const [query, setQuery] = useState('');
   const [scanning, setScanning] = useState(false);
   const lastScan = useRef({ code: null, at: 0 });
-  const beepPlayer = useAudioPlayer(beep);
 
   const load = useCallback(() => {
     getProducts().then(setProducts);
@@ -84,11 +90,10 @@ export default function ProductsScreen() {
     const now = Date.now();
     if (lastScan.current.code === data && now - lastScan.current.at < 1500) return;
     lastScan.current = { code: data, at: now };
-    beepPlayer.seekTo(0);
-    beepPlayer.play();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    playBeep();
     setForm((prev) => ({ ...prev, barcode: data }));
     setScanning(false);
+    setModalVisible(true);
   };
 
   const save = async () => {
@@ -261,7 +266,13 @@ export default function ProductsScreen() {
                   onChangeText={(v) => setForm({ ...form, barcode: v })}
                   keyboardType="number-pad"
                 />
-                <TouchableOpacity style={styles.scanButton} onPress={() => setScanning(true)}>
+                <TouchableOpacity
+                  style={styles.scanButton}
+                  onPress={() => {
+                    setModalVisible(false);
+                    setScanning(true);
+                  }}
+                >
                   <Text style={styles.scanButtonText}>Scan</Text>
                 </TouchableOpacity>
               </View>
@@ -333,7 +344,13 @@ export default function ProductsScreen() {
               <Text style={styles.scannerPermissionText}>Tap to allow camera access</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.scannerClose} onPress={() => setScanning(false)}>
+          <TouchableOpacity
+            style={styles.scannerClose}
+            onPress={() => {
+              setScanning(false);
+              setModalVisible(true);
+            }}
+          >
             <Text style={styles.scannerCloseText}>Cancel</Text>
           </TouchableOpacity>
         </View>

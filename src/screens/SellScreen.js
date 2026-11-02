@@ -4,12 +4,19 @@ import {
   KeyboardAvoidingView, Keyboard, FlatList, StyleSheet, Alert, Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useAudioPlayer } from 'expo-audio';
+import { createAudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import { getProductByCode, checkout } from '../db';
 import ScanOverlay from '../components/ScanOverlay';
 
 const beep = require('../../assets/beep.wav');
+
+const playBeep = () => {
+  const player = createAudioPlayer(beep);
+  player.play();
+  setTimeout(() => player.remove(), 1000);
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+};
 
 const money = (n) => `Rp ${n.toLocaleString('id-ID')}`;
 
@@ -27,13 +34,6 @@ export default function SellScreen() {
   const [cashReceived, setCashReceived] = useState('');
   const [torch, setTorch] = useState(false);
   const lastScan = useRef({ code: null, at: 0 });
-  const beepPlayer = useAudioPlayer(beep);
-
-  const playBeep = () => {
-    beepPlayer.seekTo(0);
-    beepPlayer.play();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  };
 
   const onScanned = async ({ data }) => {
     const now = Date.now();
