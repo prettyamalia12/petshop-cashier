@@ -35,7 +35,7 @@ export default function App() {
       >
         <Tab.Screen name="Sell" component={SellScreen} options={{ title: 'Cashier' }} />
         <Tab.Screen name="Products" component={ProductsScreen} options={{ title: 'Products' }} />
-        <Tab.Screen name="QR Code" component={QRScreen} options={{ title: 'QR per SKU' }} />
+        <Tab.Screen name="QR Code" component={QRScreen} options={{ title: 'Labels' }} />
         <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'Sales History' }} />
       </Tab.Navigator>
     </NavigationContainer>

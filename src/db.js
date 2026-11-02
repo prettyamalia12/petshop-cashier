@@ -105,6 +105,9 @@ export function updateProduct(id, { sku, name, category = '', brand = '', barcod
 
 export const deleteProduct = (id) => db.runAsync('DELETE FROM products WHERE id = ?', [id]);
 
+export const setProductBarcode = (id, barcode) =>
+  db.runAsync('UPDATE products SET barcode = ? WHERE id = ?', [barcode, id]);
+
 export async function checkout(cart, paymentMethod = 'cash') {
   const total = cart.reduce((s, it) => s + it.price * it.qty, 0);
   const profit = cart.reduce((s, it) => s + (it.price - it.cost) * it.qty, 0);
