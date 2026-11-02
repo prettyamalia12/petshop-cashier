@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { AudioModule } from 'expo-audio';
 import { initDb, seedIfEmpty } from './src/db';
 import ProductsScreen from './src/screens/ProductsScreen';
 import SellScreen from './src/screens/SellScreen';
@@ -14,6 +15,12 @@ export default function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    // Play scan beeps even when the phone's silent switch is on.
+    AudioModule.setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: false,
+      shouldPlayInBackground: false,
+    }).catch(() => {});
     initDb().then(seedIfEmpty).then(() => setReady(true));
   }, []);
 
