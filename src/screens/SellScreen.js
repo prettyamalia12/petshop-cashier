@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert,
+  View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback,
+  KeyboardAvoidingView, Keyboard, FlatList, StyleSheet, Alert, Platform,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useAudioPlayer } from 'expo-audio';
@@ -112,7 +113,11 @@ export default function SellScreen() {
   const profit = cart.reduce((s, it) => s + (it.price - it.cost) * it.qty, 0);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 82 : 0}
+    >
       <View style={styles.scannerBox}>
         {permission?.granted ? (
           <CameraView
@@ -136,11 +141,13 @@ export default function SellScreen() {
         )}
       </View>
 
-      <FlatList
-        data={cart}
-        keyExtractor={(it) => String(it.id)}
-        style={styles.cartList}
-        ListEmptyComponent={<Text style={styles.empty}>Scan a product QR/barcode to add it to the cart.</Text>}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <FlatList
+          data={cart}
+          keyExtractor={(it) => String(it.id)}
+          style={styles.cartList}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={<Text style={styles.empty}>Scan a product QR/barcode to add it to the cart.</Text>}
         renderItem={({ item }) => (
           <View style={styles.cartItem}>
             <View style={{ flex: 1 }}>
@@ -159,7 +166,8 @@ export default function SellScreen() {
             </TouchableOpacity>
           </View>
         )}
-      />
+        />
+      </TouchableWithoutFeedback>
 
       <View style={styles.paymentBox}>
         <View style={styles.methodRow}>
@@ -206,7 +214,7 @@ export default function SellScreen() {
           <Text style={styles.payText}>CHARGE</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
