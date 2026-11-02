@@ -6,7 +6,9 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useAudioPlayer } from 'expo-audio';
+import * as Haptics from 'expo-haptics';
 import { getProducts, addProduct, updateProduct, deleteProduct, generateSku, getProductByBarcode, CATEGORIES } from '../db';
+import ScanOverlay from '../components/ScanOverlay';
 
 const beep = require('../../assets/beep.wav');
 
@@ -84,6 +86,7 @@ export default function ProductsScreen() {
     lastScan.current = { code: data, at: now };
     beepPlayer.seekTo(0);
     beepPlayer.play();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setForm((prev) => ({ ...prev, barcode: data }));
     setScanning(false);
   };
@@ -316,12 +319,15 @@ export default function ProductsScreen() {
         <View style={styles.scannerContainer}>
           <Text style={styles.scannerTitle}>Scan the product's packaging barcode</Text>
           {cameraPermission?.granted ? (
-            <CameraView
-              style={styles.scannerCamera}
-              facing="back"
-              barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'code128', 'upc_a', 'upc_e', 'qr', 'datamatrix'] }}
-              onBarcodeScanned={onBarcodeScanned}
-            />
+            <View style={{ flex: 1 }}>
+              <CameraView
+                style={StyleSheet.absoluteFill}
+                facing="back"
+                barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'code128', 'upc_a', 'upc_e', 'qr', 'datamatrix'] }}
+                onBarcodeScanned={onBarcodeScanned}
+              />
+              <ScanOverlay active />
+            </View>
           ) : (
             <TouchableOpacity style={styles.scannerPermission} onPress={requestCameraPermission}>
               <Text style={styles.scannerPermissionText}>Tap to allow camera access</Text>

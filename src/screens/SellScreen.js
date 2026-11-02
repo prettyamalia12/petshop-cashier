@@ -5,7 +5,9 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useAudioPlayer } from 'expo-audio';
+import * as Haptics from 'expo-haptics';
 import { getProductByCode, checkout } from '../db';
+import ScanOverlay from '../components/ScanOverlay';
 
 const beep = require('../../assets/beep.wav');
 
@@ -23,12 +25,14 @@ export default function SellScreen() {
   const [scanning, setScanning] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [cashReceived, setCashReceived] = useState('');
+  const [torch, setTorch] = useState(false);
   const lastScan = useRef({ code: null, at: 0 });
   const beepPlayer = useAudioPlayer(beep);
 
   const playBeep = () => {
     beepPlayer.seekTo(0);
     beepPlayer.play();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   };
 
   const onScanned = async ({ data }) => {
@@ -123,6 +127,7 @@ export default function SellScreen() {
           <CameraView
             style={StyleSheet.absoluteFill}
             facing="back"
+            enableTorch={torch}
             barcodeScannerSettings={{ barcodeTypes: ['qr', 'ean13', 'ean8', 'code128', 'upc_a', 'upc_e', 'datamatrix'] }}
             onBarcodeScanned={scanning ? onScanned : undefined}
           />
@@ -134,10 +139,21 @@ export default function SellScreen() {
             </TouchableOpacity>
           </View>
         )}
+        {permission?.granted && <ScanOverlay active={scanning} />}
         {scanning && permission?.granted && (
-          <TouchableOpacity style={styles.pause} onPress={() => setScanning(false)}>
-            <Text style={styles.pauseText}>Pause scan</Text>
-          </TouchableOpacity>
+          <View style={styles.scanControls}>
+            <TouchableOpacity style={styles.controlButton} onPress={() => setScanning(false)}>
+              <Text style={styles.controlText}>Pause scan</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.controlButton, torch && styles.controlActive]}
+              onPress={() => setTorch((t) => !t)}
+            >
+              <Text style={[styles.controlText, torch && styles.controlTextActive]}>
+                Torch {torch ? 'on' : 'off'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -227,6 +243,17 @@ const styles = StyleSheet.create({
   permissionButtonText: { color: '#fff', fontWeight: '600' },
   pause: { position: 'absolute', bottom: 10, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 14 },
   pauseText: { color: '#fff' },
+  scanControls: {
+    position: 'absolute', bottom: 10, alignSelf: 'center',
+    flexDirection: 'row', gap: 10,
+  },
+  controlButton: {
+    backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 14,
+    paddingVertical: 6, borderRadius: 14,
+  },
+  controlActive: { backgroundColor: '#2e7d32' },
+  controlText: { color: '#fff' },
+  controlTextActive: { fontWeight: '700' },
   cartList: { flex: 1 },
   empty: { textAlign: 'center', marginTop: 24, color: '#888' },
   cartItem: {
