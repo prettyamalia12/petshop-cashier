@@ -167,29 +167,45 @@ export default function ProductsScreen() {
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
             <View style={styles.modal}>
               <Text style={styles.modalTitle}>{editing ? 'Edit Product' : 'New Product'}</Text>
+
+              <Text style={styles.fieldLabel}>SKU</Text>
               <TextInput
                 style={styles.input}
-                placeholder={editing ? 'SKU / barcode value' : 'SKU (leave blank to auto-generate)'}
+                placeholder={editing ? 'SKU / barcode value' : 'Leave blank to auto-generate'}
+                placeholderTextColor="#aaa"
                 value={form.sku}
                 onChangeText={(v) => setForm({ ...form, sku: v })}
                 autoCapitalize="characters"
               />
+              <Text style={styles.fieldSub}>
+                Unique product code in the AABBCC00X format. Used for QR labels and lookup.
+              </Text>
               {!editing && !form.sku.trim() && skuPreview !== '' && (
                 <Text style={styles.skuPreview}>Auto SKU: {skuPreview}</Text>
               )}
+
+              <Text style={styles.fieldLabel}>Product Name</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Product name"
+                placeholder="e.g. Cat Choize Mother Kitten (800g)"
+                placeholderTextColor="#aaa"
                 value={form.name}
                 onChangeText={(v) => setForm({ ...form, name: v })}
               />
+              <Text style={styles.fieldSub}>Name shown on the cashier and sales history.</Text>
+
+              <Text style={styles.fieldLabel}>Brand</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Brand (AA in SKU, e.g. Life Cat → LC)"
+                placeholder="e.g. Cat Choize"
+                placeholderTextColor="#aaa"
                 value={form.brand}
                 onChangeText={(v) => setForm({ ...form, brand: v })}
                 autoCapitalize="words"
               />
+              <Text style={styles.fieldSub}>The "AA" part of the SKU. Life Cat → LC, Whiskas → WH.</Text>
+
+              <Text style={styles.fieldLabel}>Category (Jenis Produk)</Text>
               {!editing && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
                   {CATEGORIES.map((c) => (
@@ -205,22 +221,33 @@ export default function ProductsScreen() {
               )}
               <TextInput
                 style={styles.input}
-                placeholder={editing ? 'Category' : 'Category (tap a chip above or type)'}
+                placeholder={editing ? 'Category' : 'Tap a chip above, or type a custom one'}
+                placeholderTextColor="#aaa"
                 value={form.category}
                 onChangeText={(v) => setForm({ ...form, category: v })}
               />
+              <Text style={styles.fieldSub}>The "BB" part of the SKU: Dry Food → D, Wet Food Kaleng → WC, and so on.</Text>
+
               {!editing && (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Rasa / varian (CC in SKU, e.g. Adult Tuna → AT) — optional"
-                  value={form.variant}
-                  onChangeText={(v) => setForm({ ...form, variant: v })}
-                />
+                <>
+                  <Text style={styles.fieldLabel}>Rasa / Varian (optional)</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. Adult Tuna"
+                    placeholderTextColor="#aaa"
+                    value={form.variant}
+                    onChangeText={(v) => setForm({ ...form, variant: v })}
+                  />
+                  <Text style={styles.fieldSub}>The "CC" part of the SKU. Adult Tuna → AT, Kitten → K.</Text>
+                </>
               )}
+
+              <Text style={styles.fieldLabel}>Packaging Barcode (optional)</Text>
               <View style={styles.barcodeRow}>
                 <TextInput
                   style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                  placeholder="Packaging barcode (optional)"
+                  placeholder="e.g. 8994125000705"
+                  placeholderTextColor="#aaa"
                   value={form.barcode}
                   onChangeText={(v) => setForm({ ...form, barcode: v })}
                   keyboardType="number-pad"
@@ -229,23 +256,43 @@ export default function ProductsScreen() {
                   <Text style={styles.scanButtonText}>Scan</Text>
                 </TouchableOpacity>
               </View>
-              <Text style={styles.barcodeHint}>
-                Scan the barcode printed on the product's packaging. At the cashier, the camera accepts both this barcode and the SKU QR.
+              <Text style={styles.fieldSub}>
+                The barcode already printed on the packaging. At the cashier, the camera accepts this barcode and the SKU QR.
               </Text>
-              {[
-                ['price', 'Selling price'],
-                ['cost', 'Purchase cost'],
-                ['stock', 'Stock qty'],
-              ].map(([key, placeholder]) => (
-                <TextInput
-                  key={key}
-                  style={styles.input}
-                  placeholder={placeholder}
-                  value={form[key]}
-                  onChangeText={(v) => setForm({ ...form, [key]: v })}
-                  keyboardType="numeric"
-                />
-              ))}
+
+              <Text style={styles.fieldLabel}>Selling Price (Harga Jual)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 22000"
+                placeholderTextColor="#aaa"
+                value={form.price}
+                onChangeText={(v) => setForm({ ...form, price: v })}
+                keyboardType="numeric"
+              />
+              <Text style={styles.fieldSub}>Price the customer pays per unit.</Text>
+
+              <Text style={styles.fieldLabel}>Purchase Cost (Harga Beli / pcs)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 18800"
+                placeholderTextColor="#aaa"
+                value={form.cost}
+                onChangeText={(v) => setForm({ ...form, cost: v })}
+                keyboardType="numeric"
+              />
+              <Text style={styles.fieldSub}>What you paid per unit. Profit = selling price − cost.</Text>
+
+              <Text style={styles.fieldLabel}>Stock Quantity</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. 25"
+                placeholderTextColor="#aaa"
+                value={form.stock}
+                onChangeText={(v) => setForm({ ...form, stock: v })}
+                keyboardType="numeric"
+              />
+              <Text style={styles.fieldSub}>Units on hand. Decreases automatically with each sale.</Text>
+
               <View style={styles.modalButtons}>
                 <TouchableOpacity style={[styles.button, styles.cancel]} onPress={() => setModalVisible(false)}>
                   <Text style={styles.buttonText}>Cancel</Text>
@@ -312,14 +359,15 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: '#2e7d32' },
   chipText: { fontSize: 12, color: '#555' },
   chipTextActive: { color: '#fff', fontWeight: '600' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, marginBottom: 10 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, marginBottom: 4 },
+  fieldLabel: { fontSize: 13, fontWeight: '700', color: '#333', marginBottom: 4 },
+  fieldSub: { fontSize: 11, color: '#888', marginBottom: 10 },
   barcodeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   scanButton: {
     backgroundColor: '#2e7d32', paddingHorizontal: 14, paddingVertical: 11,
     borderRadius: 8, marginBottom: 0,
   },
   scanButtonText: { color: '#fff', fontWeight: '700' },
-  barcodeHint: { fontSize: 11, color: '#888', marginBottom: 10 },
   scannerContainer: { flex: 1, backgroundColor: '#000', paddingTop: 60 },
   scannerTitle: { color: '#fff', textAlign: 'center', fontSize: 16, marginBottom: 16 },
   scannerCamera: { flex: 1 },
