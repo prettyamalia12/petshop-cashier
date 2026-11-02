@@ -14,7 +14,9 @@
     },
     "android": {
       "package": "com.petshop.cashier",
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA"
+      ]
     },
     "plugins": [
       [
@@ -22,7 +24,8 @@
         {
           "cameraPermission": "Allow PetShop Cashier to scan product QR/barcodes."
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

@@ -5,7 +5,10 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useAudioPlayer } from 'expo-audio';
 import { getProducts, addProduct, updateProduct, deleteProduct, generateSku, getProductByBarcode, CATEGORIES } from '../db';
+
+const beep = require('../../assets/beep.wav');
 
 const emptyForm = { sku: '', name: '', category: '', brand: '', variant: '', barcode: '', price: '', cost: '', stock: '' };
 
@@ -17,6 +20,7 @@ export default function ProductsScreen() {
   const [query, setQuery] = useState('');
   const [scanning, setScanning] = useState(false);
   const lastScan = useRef({ code: null, at: 0 });
+  const beepPlayer = useAudioPlayer(beep);
 
   const load = useCallback(() => {
     getProducts().then(setProducts);
@@ -78,6 +82,8 @@ export default function ProductsScreen() {
     const now = Date.now();
     if (lastScan.current.code === data && now - lastScan.current.at < 1500) return;
     lastScan.current = { code: data, at: now };
+    beepPlayer.seekTo(0);
+    beepPlayer.play();
     setForm((prev) => ({ ...prev, barcode: data }));
     setScanning(false);
   };

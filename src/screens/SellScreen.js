@@ -3,7 +3,10 @@ import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useAudioPlayer } from 'expo-audio';
 import { getProductByCode, checkout } from '../db';
+
+const beep = require('../../assets/beep.wav');
 
 const money = (n) => `Rp ${n.toLocaleString('id-ID')}`;
 
@@ -20,6 +23,12 @@ export default function SellScreen() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [cashReceived, setCashReceived] = useState('');
   const lastScan = useRef({ code: null, at: 0 });
+  const beepPlayer = useAudioPlayer(beep);
+
+  const playBeep = () => {
+    beepPlayer.seekTo(0);
+    beepPlayer.play();
+  };
 
   const onScanned = async ({ data }) => {
     const now = Date.now();
@@ -39,6 +48,7 @@ export default function SellScreen() {
       Alert.alert('Out of stock', `${product.name} is out of stock.`);
       return;
     }
+    playBeep();
     setCart((prev) => {
       const i = prev.findIndex((it) => it.id === product.id);
       if (i >= 0) {
